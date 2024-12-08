@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>路線の緯度・経度情報を取得するためのページ</title>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJ1Q5OJfYlptnd1B9Y_Lt3_hOobV_jTMU&libraries=geometry&language=ja">
+</script>
+</head>
+
+<body>
+    <b>路線の緯度・経度情報を取得するためのページ（距離を短くすると精度が上がります）</b>
+    <form name="form1">
+        出発地：<input type="text" name="start" size="40">（例 1：松山駅）（例 2：33.84041,132.75167）<br>
+        到着地：<input type="text" name="goal" size="40">（例 1：高縄山）（例 2：33.94556,132.84996）<br>
+        <input type="button" value="経路情報取得" onclick="makeroute()">
+        <div id="map_canvas" style="height:500px"></div>
+        <div id="result"></div>
+    </form>
+    <script type="text/javascript">
+        var cen_lat = 33.849231, cen_lng = 132.769846, map;
+        function init() {
+            map = new google.maps.Map(document.getElementById("map_canvas"), {
+                zoom: 12, center: new google.maps.LatLng(cen_lat, cen_lng), mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
+        }
+        function makeroute() {
+            init();
+            var dService = new google.maps.DirectionsService();
+            var start = document.form1.start.value;
+            var goal = document.form1.goal.value;
+            if (start.match(/^[0-9\., ]+$/)) { //緯度・経度が入力されている場合 
+                var p = start.split(",");
+                start = new google.maps.LatLng(p[0], p[1]);
+            }
+            if (goal.match(/^[0-9\., ]+$/)) { //緯度・経度が入力されている場合 
+                var p = goal.split(",");
+                goal = new google.maps.LatLng(p[0], p[1]);
+            }
+            var request = { origin: start, destination: goal, travelMode: google.maps.TravelMode.DRIVING };
+            dService.route(request, function (response, status) {
+                if (status == google.maps.DirectionsStatus.OK) {
+                    var points = new Array(response.routes[0].overview_path.length);
+                    var str = "<pre>ポイント数：" + points.length + "\n";
+                    for (var i = 0; i < points.length; i++) {
+                        var lat = response.routes[0].overview_path[i].lat();
+                        var lng = response.routes[0].overview_path[i].lng();
+                        points[i] = new google.maps.LatLng(lat, lng);
+                        lat = Math.round(lat * 1000000000) / 1000000000;
+                        lng = Math.round(lng * 1000000000) / 1000000000;
+                        str += lat + "," + lng + ",\n";
+                    }
+                    str += "</pre>";
+                    new google.maps.Polyline(
+                        { path: points, strokeWeight: 1, strokeColor: '#ff0000', strokeOpacity: "1.0" }).setMap(map);
+                    document.getElementById("result").innerHTML = str;
+                } else {
+                    alert("認識できませんでした");
+                }
+            });
+        }
+        init(); 
+    </script>
+</body>
+
+</html>

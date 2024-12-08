@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <script src="https://ajaxzip3.github.io/ajaxzip3.js" charset="UTF-8"></script>
+    <title>宅配ピザ屋</title>
+    <style>
+        body {
+            background-image: linear-gradient(to right, green 33.333%, white 33.333%, white 66.666%, red 66.666%);
+            background-size: 100% 100%;
+            margin: 0;
+        }
+
+        .header {
+            border-bottom: double 5px peru;
+        }
+
+        .spacer {
+            height: 60px;
+        }
+
+        input[value=" クリア "] {
+            border: 2px solid rgb(0, 0, 0);
+            height: 50px;
+            width: 150px;
+            font-size: 25px;
+            color: rgb(0, 0, 0);
+            background-color: rgb(255, 126, 126);
+        }
+
+        input[value="内容を確認する"] {
+            border: 2px solid rgb(0, 0, 0);
+            height: 50px;
+            width: 200px;
+            font-size: 25px;
+            color: rgb(0, 0, 0);
+            background-color: rgb(20, 147, 250);
+        }
+
+        input:hover {
+            background-color: #bdbdbd;
+        }
+
+        input:active {
+            background-color: dimgray;
+            box-shadow: 0 3px rgb(0, 0, 0);
+            transform: translateY(3px);
+        }
+
+        table {
+            border-collapse: collapse;
+            background-color: rgba(207, 207, 207, 0.7);
+        }
+    </style>
+    <script type="text/javascript">
+
+        function CanAlcohol() {
+            var age = document.form1.age.value;
+            if (age == "under9" || age == "10～19") {
+                document.getElementById('alcohol').style.display = "none";
+                document.form1.ram.checked = false;
+                document.form1.gin.checked = false;
+                document.form1.vodka.checked = false;
+                document.form1.tequila.checked = false;
+                document.form1.shelley.checked = false;
+                document.form1.bourbon.checked = false;
+                document.form1.RomaneeConti.checked = false;
+                calc();
+            } else {
+                document.getElementById('alcohol').style.display = "";
+            }
+        }
+
+        function calc() {
+            var total = 0;
+            var subtotal = 0;
+            if (document.getElementsByName('size').item(0).checked) total = 1400;
+            else if (document.getElementsByName('size').item(1).checked) total = 1200;
+            else if (document.getElementsByName('size').item(2).checked) total = 1000;
+            if (document.form1.cheese.checked) total += 120;
+            if (document.form1.tomato.checked) total += 140;
+            if (document.form1.bacon.checked) total += 160;
+            if (document.form1.cauliflower.checked) total += 160;
+            if (document.form1.sweetcorn.checked) total += 180;
+            if (document.form1.salami.checked) total += 200;
+            if (document.form1.pineapple.checked) total += 200;
+            if (document.getElementsByName('side').item(0).checked) total += 500;
+            else if (document.getElementsByName('side').item(1).checked) total += 600;
+            if (document.form1.milk.checked) total += 100;
+            if (document.form1.orange.checked) total += 100;
+            if (document.form1.apple.checked) total += 100;
+            if (document.form1.tea.checked) total += 120;
+            if (document.form1.cola.checked) total += 150;
+            if (document.form1.sprite.checked) total += 150;
+            if (document.form1.ram.checked) total += 300;
+            if (document.form1.gin.checked) total += 350;
+            if (document.form1.vodka.checked) total += 350;
+            if (document.form1.tequila.checked) total += 350;
+            if (document.form1.shelley.checked) total += 400;
+            if (document.form1.bourbon.checked) total += 450;
+            if (document.form1.RomaneeConti.checked) total += 9000;
+            subtotal = total;
+            if (document.form1.donate1.checked) total = total + subtotal * 0.05;
+            if (document.form1.donate2.checked) total = total + subtotal * 0.05;
+            if (document.form1.donate3.checked) total = total + subtotal * 0.10;
+            total = parseFloat(total).toFixed(0);
+            document.form1.total.value = total + "円";
+        } 
+    </script>
+</head>
+
+<body>
+    <h2 align="center"><span class="header"><i>Pizza Delivery</i></span></h2>
+    <form name="form1" action="3.php" method="POST">
+        <table align="center" border="2" cellpadding=10 cellspacing=0 height=50 width=800 bgcolor="white">
+            <tr>
+                <td width="150">名前<font color="red">※必須</font>
+                </td>
+                <td width="0.1" bgcolor="orange" rowspan=16></td>
+                <td><input type="text" name="name" size=20 placeholder="山田 太郎 (例)" required></td>
+            </tr>
+            <tr>
+                <td>パスワード<font color="red">※必須</font>
+                </td>
+                <td><input type="password" name="password" size=20 required autocomplete="on">
+                </td>
+            </tr>
+            <tr>
+                <td>電子メール<font color="red">※必須</font>
+                </td>
+                <td><input type="text" name="mail" size=40 placeholder="aaaaaaa0123@mails.com (例)" required></td>
+            </tr>
+            <td>郵便番号<font color="red">※必須</font>
+            </td>
+            <td>〒<input type="text" size="10" maxlength="8" onkeyup="AjaxZip3.zip2addr(this,'','address','address')"
+                    name="zip-code" placeholder="012-3456 (例)" required></td>
+            </tr>
+            <tr>
+                <td>住所<font color="red">※必須</font>
+                </td>
+                <td><input size="40" name="address" type="text" required> (自動入力されます)</td>
+            </tr>
+            <tr>
+                <td>部屋番号等</td>
+                <td><input size="40" name="room-number" type="text"></td>
+            </tr>
+            <tr>
+                <td>性別<font color="red">※必須</font>
+                </td>
+                <td>
+                    <input type="radio" name="sex" value="man" required>男
+                    <input type="radio" name="sex" value="woman" required>女
+                    <input type="radio" name="sex" value="others" required>その他
+                </td>
+            </tr>
+            <tr>
+                <td>年齢<font color="red">※必須</font>
+                </td>
+                <td>
+                    <select name="age" onchange="CanAlcohol()" required>
+                        <option value="" disabled selected>選択して下さい</option>
+                        <option value="under9">9歳以下</option>
+                        <option value="10～19">10～19</option>
+                        <option value="20～29">20～29</option>
+                        <option value="30～39">30～39</option>
+                        <option value="40～49">40～49</option>
+                        <option value="50～59">50～59</option>
+                        <option value="60～69">60～69</option>
+                        <option value="70～79">70～79</option>
+                        <option value="over80">80歳以上</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>ピザの大きさ<font color="red">※必須</font>
+                </td>
+                <td>
+                    <input type="radio" name="size" value="big" onChange="calc()" required>大 1,400 円
+                    <input type="radio" name="size" value="medium" onChange="calc()" required>中 1,200 円
+                    <input type="radio" name="size" value="small" onChange="calc()" required>小 1,000 円
+                </td>
+            </tr>
+            <tr>
+                <td>トッピング</td>
+                <td><input type="checkbox" name="cheese" onChange="calc()">チーズ 120 円
+                    <input type="checkbox" name="tomato" onChange="calc()">トマト 140 円
+                    <input type="checkbox" name="bacon" onChange="calc()">ベーコン 160 円
+                    <input type="checkbox" name="cauliflower" onChange="calc()">カリフラワー 160 円<br>
+                    <input type="checkbox" name="sweetcorn" onChange="calc()">スイートコーン 180 円
+                    <input type="checkbox" name="salami" onChange="calc()">サラミ 200 円
+                    <input type="checkbox" name="pineapple" onChange="calc()">パイナップル 200 円
+                </td>
+            </tr>
+            <td>サイド<font color="red">※必須</font>
+            </td>
+            <td>
+                <input type="radio" name="side" value="potato" onChange="calc()" required>ポテト 500 円
+                <input type="radio" name="side" value="chicken" onChange="calc()" required>旨辛チキン 600 円
+                <input type="radio" name="side" value="none" onChange="calc()" required>無し
+            </td>
+            <tr>
+                <td>ソフトドリンク</td>
+                <td><input type="checkbox" name="milk" onChange="calc()">牛乳 100 円
+                    <input type="checkbox" name="orange" onChange="calc()">オレンジジュース 100 円
+                    <input type="checkbox" name="apple" onChange="calc()">アップルジュース 100 円<br>
+                    <input type="checkbox" name="tea" onChange="calc()">お茶 120 円
+                    <input type="checkbox" name="cola" onChange="calc()">コーラ 150 円
+                    <input type="checkbox" name="sprite" onChange="calc()">スプライト 150 円
+                </td>
+            </tr>
+            <tr id="alcohol">
+                <td>アルコール</td>
+                <td>
+                    <font color="red">※20歳未満の方の飲酒は法律によって禁止されています。</font>
+                    <br> <input type="checkbox" name="ram" onChange="calc()">ラム 300 円
+                    <input type="checkbox" name="gin" onChange="calc()">ジン 350 円
+                    <input type="checkbox" name="vodka" onChange="calc()">ウォッカ 350 円
+                    <input type="checkbox" name="tequila" onChange="calc()">テキーラ 350 円<br>
+                    <input type="checkbox" name="shelley" onChange="calc()">シェリー 400 円
+                    <input type="checkbox" name="bourbon" onChange="calc()">バーボン 450 円
+                    <input type="checkbox" name="RomaneeConti" onChange="calc()">ロマネ・コンティ 9,000 円
+                </td>
+            </tr>
+            <tr>
+                <td>寄付</td>
+                <td>
+                    <input type="checkbox" name="donate1" onChange="calc()">国際マリオ歌劇団 5%
+                    <input type="checkbox" name="donate2" onChange="calc()">キノコスイミングスクール 5%
+                    <input type="checkbox" name="donate3" onChange="calc()">ピーチ教会 10%
+                </td>
+            </tr>
+            <tr>
+                <td>要望</td>
+                <td><textarea name="request" rows=3 cols=40 placeholder="焼き方に要望があれば記入して下さい"></textarea></td>
+            </tr>
+            <tr>
+                <td>合計</td>
+                <td><input type="text" name="total" size=20 value="0円" readonly></td>
+            </tr>
+        </table>
+        <input type="hidden" name="uketsuke" value="j520329b@mails.cc.ehime-u.ac.jp">
+        <p align="center"><input type="reset" value=" クリア ">&nbsp;&nbsp;
+            <input type="submit" value="内容を確認する">
+        </p>
+    </form>
+    <div class="spacer"></div>
+</body>
+
+</html>

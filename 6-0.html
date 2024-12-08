@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <script type="text/javascript">
+        var i = 1;
+        function foo() {
+            img.src = "http://ns.cs.ehime-u.ac.jp/photo/sample" + i + ".jpg";
+            img.width = 320 + i * 24;
+            i++;
+            if (i == 20) i = 1;
+        } 
+    </script>
+</head>
+
+<body>
+    <input type="button" value="画像チェンジ" onClick="foo()"><br><br>
+    <img name="img" width=640 border=1 src="http://ns.cs.ehime-u.ac.jp/photo/black.png">
+</body>
+
+</html>

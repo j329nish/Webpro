@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+</head>
+
+<body>
+    <H4>1 次元ランダムウォーク</H4>
+    <canvas id="c1" width="1000" height="200"></canvas><br>
+    移動回数：<span id="move">0</span>&emsp;原点復帰回数：<span id="cnt">0</span><br>
+    <script type="text/javascript">
+        var canvas = document.getElementById('c1');
+        var ctx = canvas.getContext("2d");
+        var p, tid = null;
+        var x, y, move, cnt;
+        function init() {
+            x = 0; y = 100; // 開始座標 
+            move = cnt = 0;
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, 1000, 200); //背景を黒で描画 
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 100, 1000, 1); //白で中央線を引く 横線や縦線は矩形として描画すると簡単！ 
+            ctx.putImageData(p, x, y);
+            update();
+        }
+        function update() {
+            x++;
+            Math.random() < 0.5 ? y++ : y--;
+            document.getElementById("move").innerHTML = ++move;
+            if (y == 100) { // 原点(y==100)に復帰したら cnt を増やす 
+                document.getElementById("cnt").innerHTML = ++cnt;
+            }
+            ctx.putImageData(p, x, y);
+            tid = setTimeout("update()", 50); //50 ミリ秒経過後に呼び出す 
+        }
+        p = ctx.createImageData(1, 1); // 点の画像を用意 
+        p.data[0] = 0; // R 
+        p.data[1] = 255; // G 
+        p.data[2] = 0; // B 
+        p.data[3] = 255; // 不透明 (255 は透明にしない) 
+        init(); 
+    </script>
+    <pre>
+        n 回移動したとき、1 から n 回移動する間に原点に戻った回数の期待値： √(2n/π) 
+         100 回移動 8 回 
+         300 回移動 14 回 
+         500 回移動 18 回 
+         1000 回移動 25 回 
+         10000 回移動 80 回 
+         100000 回移動 252 回 
+        1000000 回移動 798 回 
+        </pre>
+    <input type="button" value="再スタート" onClick="init()">
+</body>
+
+</html>

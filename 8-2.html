@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>アナログ時計</title>
+    <style>
+        body {
+            color: #ffffff;
+            background-color: #202020;
+        }
+
+        input[value="スタート"],
+        input[value="ストップ"],
+        input[value="リセット"] {
+            border: 2px solid #ffffff;
+            height: 40px;
+            width: 160px;
+            font-size: 20px;
+            border-radius: 10px;
+            color: #ffffff;
+            background-color: #202020;
+        }
+    </style>
+</head>
+
+<body>
+    <h3 align="center">
+        <font size="5">アナログ時計</font>
+    </h3>
+    <table align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+        <tr>
+            <td>
+                <canvas id="c1" width="500" height="500"></canvas>
+            </td>
+            <td>
+                <span id="WieSpätIstEs"></span><br>
+                <span id="WieSpätIstEs2"></span>
+            </td>
+        </tr>
+    </table>
+    <table align="center">
+        <tr>
+            <td>
+                <input type="button" value="スタート" onClick="startC()">
+                <input type="button" value="ストップ" onClick="stopC()">
+                <input type="button" value="リセット" onClick="resetC()">
+            </td>
+        </tr>
+    </table>
+    <br><br>
+    <h1 align="center">
+        <font size="5">説明</font>
+    </h1>
+    <table align="center">
+        <tr>
+            <td>
+                1.この時計はクロノグラフの機能を備えています。
+            </td>
+        </tr>
+        <tr>
+            <td>
+                2.スタートボタンを押すと、クロノグラフの中のストップウォッチが動きます。
+            </td>
+        </tr>
+        <tr>
+            <td>
+                3.ストップボタンを押すと、ストップウォッチが止まります。
+            </td>
+        </tr>
+        <tr>
+            <td>
+                4.リセットボタンを押すと、ストップウォッチの針が最初の位置で止まります。
+            </td>
+        </tr>
+        <tr>
+            <td>
+                5.右の円は秒針の100分の1、左の円は秒針、真ん中の円は分針を表しています。
+            </td>
+        </tr>
+        <tr>
+            <td>
+                6.右に書かれている文字はドイツ語で、今の時間を表しています。
+            </td>
+        </tr>
+    </table>
+    <br><br>
+    <script type="text/javascript">
+        var canvas = document.getElementById('c1');
+        var ctx = canvas.getContext("2d");
+        var a1 = new Audio("effect/clock.mp3");
+        var sound = 0;
+        var isMove = 0;
+        var startTime;
+        var timer = 0;
+        var updateid = 0;
+        const watch = ["", "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ"];
+        const Zeit = ["null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn",
+            "elf", "zwölf", "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn",
+            "zwanzig", "einundzwanzig", "zweiundzwanzig", "dreiundzwanzig", "vierundzwanzig", "fünfundzwanzig",
+            "sechsundzwanzig", "siebenundzwanzig", "achtundzwanzig", "neunundzwanzig", "dreißig", "einunddreißig",
+            "zweiunddreißig", "dreiunddreißig", "vierunddreißig", "fünfunddreißig", "sechsunddreißig", "siebenunddreißig",
+            "achtunddreißig", "neununddreißig", "vierzig", "einundvierzig", "zweiundvierzig", "dreiundvierzig",
+            "vierundvierzig", "fünfundvierzig", "sechsundvierzig", "siebenundvierzig", "achtundvierzig",
+            "neunundvierzig", "fünfzig", "einundfünfzig", "zweiundfünfzig", "dreiundfünfzig", "vierundfünfzig",
+            "fünfundfünfzig", "sechsundfünfzig", "siebenundfünfzig", "achtundfünfzig", "neunundfünfzig"];
+
+        function update() {
+            ctx.clearRect(0, 0, 500, 500);
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'gold';
+            ctx.lineWidth = 40;
+            ctx.beginPath();
+            ctx.arc(250, 250, 200, 0, 2.0 * Math.PI, true);
+            ctx.stroke();
+            ctx.fill();
+            updateid = (updateid + 1) % 100;
+            if (!updateid) {
+                ClockSound();
+            }
+
+            ctx.fillStyle = 'black'; // 文字の色 
+            ctx.font = "36px 'ＭＳ ゴシック'";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (i = 1; i <= 12; i++) {
+                ctx.fillText(watch[i], 250 + 170 * Math.sin(2 * Math.PI * i / 12), 250 - 170 * Math.cos(2 * Math.PI * i / 12));
+            }
+            var date = new Date();
+            var hf = date.getHours();
+            var hh = hf % 12;
+            var mm = date.getMinutes();
+            var ss = date.getSeconds();
+
+            if (isMove) {
+                timer = (new Date() - startTime) / 10;
+            }
+            var chronoMS = timer % 60;
+            var chronoS = (timer / 100) % 60;
+            var chronoM = Math.floor(timer / 6000) % 60;
+            ctx.lineWidth = 6;
+
+            // 左の円
+            ctx.strokeStyle = 'orange';
+            ctx.beginPath();
+            ctx.arc(170, 250, 50, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(170, 250);
+            ctx.lineTo(170 + 45 * Math.sin(2 * Math.PI * chronoS / 60), 250 - 45 * Math.cos(2 * Math.PI * chronoS / 60));
+            ctx.stroke();
+
+            // 真ん中の円
+            ctx.strokeStyle = 'orange';
+            ctx.beginPath();
+            ctx.arc(250, 330, 50, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(250, 330);
+            ctx.lineTo(250 + 45 * Math.sin(2 * Math.PI * chronoM / 60), 330 - 45 * Math.cos(2 * Math.PI * chronoM / 60));
+            ctx.stroke();
+
+            // 右の円
+            var rightCircleX = 330;
+            var rightCircleY = 250;
+            ctx.strokeStyle = 'orange';
+            ctx.beginPath();
+            ctx.arc(330, 250, 50, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(330, 250);
+            ctx.lineTo(330 + 45 * Math.sin(2 * Math.PI * chronoMS / 60), 250 - 45 * Math.cos(2 * Math.PI * chronoMS / 60));
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.fillStyle = 'orange';
+            ctx.arc(170, 250, 5, 0, 2.0 * Math.PI, true);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.fillStyle = 'orange';
+            ctx.arc(250, 330, 5, 0, 2.0 * Math.PI, true);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.fillStyle = 'orange';
+            ctx.arc(330, 250, 5, 0, 2.0 * Math.PI, true);
+            ctx.fill();
+
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.moveTo(250, 250);
+            ctx.lineTo(250 + 100 * Math.sin(2 * Math.PI * (hh + mm / 60) / 12), 250 - 100 * Math.cos(2 * Math.PI * (hh + mm / 60) / 12));
+            ctx.stroke();
+
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(250, 250);
+            ctx.lineTo(250 + 140 * Math.sin(2 * Math.PI * mm / 60), 250 - 140 * Math.cos(2 * Math.PI * mm / 60));
+            ctx.stroke();
+
+            ctx.strokeStyle = 'gold';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(250, 250);
+            ctx.lineTo(250 + 180 * Math.sin(2 * Math.PI * ss / 60), 250 - 180 * Math.cos(2 * Math.PI * ss / 60));
+            ctx.moveTo(250, 250);
+            ctx.lineTo(250 - 30 * Math.sin(2 * Math.PI * ss / 60), 250 + 30 * Math.cos(2 * Math.PI * ss / 60));
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.fillStyle = 'gold';
+            ctx.arc(250, 250, 10, 0, 2.0 * Math.PI, true);
+            ctx.fill();
+
+            document.getElementById("WieSpätIstEs").innerHTML = "<font size='5'>" + Zeit[hf] + ' Uhr ' + Zeit[mm] + "</font>";
+            if (hh == 0) { hh = 12; }
+            if (mm == 30) {
+                document.getElementById("WieSpätIstEs2").innerHTML = "<font size='5'>halb " + Zeit[(hh + 1) % 13] + "</font>";
+            } else if (mm == 15) {
+                document.getElementById("WieSpätIstEs2").innerHTML = "<font size='5'>Viertel nach " + Zeit[hh] + "</font>";
+            } else if (mm == 45) {
+                document.getElementById("WieSpätIstEs2").innerHTML = "<font size='5'>Viertel vor " + Zeit[(hh + 1) % 13] + "</font>";
+            } else if (mm < 30) {
+                document.getElementById("WieSpätIstEs2").innerHTML = "<font size='5'>" + Zeit[mm] + ' nach ' + Zeit[hh] + "</font>";
+            } else {
+                document.getElementById("WieSpätIstEs2").innerHTML = "<font size='5'>" + Zeit[60 - mm] + ' vor ' + Zeit[(hh + 1) % 13] + "</font>";
+            }
+            setTimeout("update()", 10); // 1000 ミリ秒経過後に update() を実行する 
+        }
+
+        function ClockSound() {
+            sound = (sound + 1) % 2;
+            a1.play();
+            setTimeout(function () { a1.pause(); if (sound == 1) a1.currentTime = 0; }, 1000);
+        }
+
+        function startC() {
+            if (!isMove) {
+                isMove++;
+                startTime = new Date() - timer * 1000;
+            }
+        }
+
+        function stopC() {
+            isMove = 0;
+        }
+
+        function resetC() {
+            isMove = 0;
+            timer = 0;
+        }
+
+        update(); 
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>人工衛星シミュレーション</title>
+    <style>
+        body {
+            color: #ffffff;
+            background-color: #202020;
+        }
+
+        input[value="(再)スタート"],
+        input[value="10.0%減速"],
+        input[value="11.1%加速"],
+        input[value="ストップ"],
+        input[value="再開"] {
+            border: 2px solid #ffffff;
+            height: 40px;
+            width: 160px;
+            font-size: 20px;
+            border-radius: 10px;
+            color: #ffffff;
+            background-color: #202020;
+        }
+    </style>
+</head>
+
+<body>
+    <h4 align="center">
+        <font size="5">人工衛星シミュレーション</font>
+    </h4>
+    <table align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+        <tr>
+            <td>　　</td>
+            <td>
+                経過時間：<span id="move">0</span><br>
+                同期衛星の座標と速度：<span id="z0" style="display:inline-block;width:130px"></span><span id="s0"></span><br>
+                人工衛星の座標と速度：<span id="z" style="display:inline-block;width:130px"></span><span id="s"></span><br>
+                地球の中心からの距離：<span id="r">200</span><br>
+                地球の中心からの最大距離：<span id="lr">200</span><br>
+                地球の中心からの最小距離：<span id="sr">200</span><br>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" value="(再)スタート" onClick="init()">
+                <input type="button" value="ストップ" onClick="stop()">
+                <input type="button" value="再開" onClick="start()">
+                <input type="button" value="11.1%加速" onclick="acceleration()">
+                <input type="button" value="10.0%減速" onclick="deceleration()">
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+        <tr>
+            <td>
+                <canvas id="c1" width="800" height="800" style="position:absolute; z-index:0"></canvas>
+                <canvas id="c2" width="800" height="800" style="position:absolute; z-index:1"></canvas>
+            </td>
+            <td>　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　</td>
+        </tr>
+    </table>
+    <script type="text/javascript">
+        var canvas1 = document.getElementById('c1');
+        var canvas2 = document.getElementById('c2');
+        var ctx1 = canvas1.getContext("2d");
+        var ctx2 = canvas2.getContext("2d");
+        var i, j, p0, p, path;
+        var x0 = 0, y0 = -200, vx0 = -2, vy0 = 0; // 同期衛星の開始座標と初速度(こちらは動かさない) 
+        var x = 200, y = 0, vx = 0, vy = -2; // 人工衛星の開始座標と初速度 
+        var move = 0; // 移動回数 
+        var r2, r3; // 一時的に使用する距離の 2 乗と 3 乗 
+        var v0, v, e0, e; // 同期衛星と人工衛星の速度と力学的エネルギー 
+        var lr = 200, sr = 200; // 地球の中心からの最大距離と最小距離
+
+        function init() {
+            if (move) {
+                path++;
+                move = 0;
+                setTimeout("init()", 40);
+            } else {
+                path = 0;
+                x0 = 0, y0 = -200, vx0 = -2, vy0 = 0; // 同期衛星の開始座標と初速度(こちらは動かさない) 
+                x = 200, y = 0, vx = 0, vy = -2; // 人工衛星の開始座標と初速度 
+                move = 0; // 移動回数 
+                lr = 200, sr = 200; // 地球の中心からの最大距離と最小距離\
+                ctx1.fillStyle = 'black';
+                ctx1.fillRect(0, 0, 800, 800);
+                p0 = ctx1.createImageData(1, 1); // 点の画像を用意(同期衛星の軌跡) 
+                p0.data[0] = 255; // R 
+                p0.data[1] = 0; // G 
+                p0.data[2] = 0; // B 
+                p0.data[3] = 255; // 透明度 (255 は透明にしない) 
+                p = ctx1.createImageData(1, 1); // 点の画像を用意(人工衛星の軌跡) 
+                p.data[0] = 0; // R 
+                p.data[1] = 255; // G 
+                p.data[2] = 0; // B 
+                p.data[3] = 255; // 透明度 (255 は透明にしない) 
+                //地球をキャンバス c1 に描画 
+                ctx1.fillStyle = '#0080ff';
+                ctx1.beginPath();
+                ctx1.arc(400, 400, 24, 0, Math.PI * 2, true);
+                ctx1.fill();
+
+                update();
+            }
+        }
+
+        function update() {
+            if (path) {
+                return;
+            }
+            // キャンバス c2 の内容をクリア 
+            ctx2.clearRect(0, 0, 800, 800);
+            // 同期衛星の移動計算 
+            r2 = x0 * x0 + y0 * y0;
+            r3 = Math.sqrt(r2) * r2;
+            vx0 += -800 * x0 / r3;
+            vy0 += -800 * y0 / r3;
+            x0 += vx0;
+            y0 += vy0;
+            e0 = -800 / Math.sqrt(r2) + (vx0 * vx0 + vy0 * vy0) / 2; // 力学的エネルギー(位置エネルギー+運動エネルギー) 
+            // 人工衛星の移動計算
+            r2 = x * x + y * y;
+            r3 = Math.sqrt(r2) * r2;
+            vx += -800 * x / r3;
+            vy += -800 * y / r3;
+            x += vx;
+            y += vy;
+            e = -800 / Math.sqrt(r2) + (vx * vx + vy * vy) / 2; // 力学的エネルギー(位置エネルギー+運動エネルギー) 
+
+            r = Math.sqrt(r2);
+            document.getElementById("r").innerHTML = Math.round(r);
+            if (r < sr) {
+                sr = r;
+                document.getElementById("sr").innerHTML = Math.round(sr);
+            }
+            if (r > lr) {
+                lr = r;
+                document.getElementById("lr").innerHTML = Math.round(lr);
+            }
+            v0 = Math.round(Math.sqrt(vx0 * vx0 + vy0 * vy0) * 100) / 100;
+            if (Number.isInteger(v0)) v0 += ".00";
+            e0 = Math.round(e0 * 100) / 100;
+            if (Number.isInteger(e0)) e0 += ".00";
+            v = Math.round(Math.sqrt(vx * vx + vy * vy) * 100) / 100;
+            if (Number.isInteger(v)) v += ".00";
+            else if (Number.isInteger(v * 10)) v += "0";
+            e = Math.round(e * 100) / 100;
+            if (Number.isInteger(e)) e += ".00";
+            else if (Number.isInteger(e * 10)) e += "0";
+            // 同期衛星と人工衛星の軌跡をキャンバス c1 に描画 
+            document.getElementById("move").innerHTML = ++move;
+            document.getElementById("z0").innerHTML = "x=" + parseInt(x0) + " y=" + parseInt(y0);
+            document.getElementById("s0").innerHTML = "v=" + v0 + " e=" + e0;
+            ctx1.putImageData(p0, x0 + 400, y0 + 400); // 点を描画する 
+            document.getElementById("z").innerHTML = "x=" + parseInt(x) + " y=" + parseInt(y);
+            document.getElementById("s").innerHTML = "v=" + v + " e=" + e;
+            ctx1.putImageData(p, x + 400, y + 400); // 点を描画する 
+            // 同期衛星と人工衛星をキャンバス c2 に描画 
+            ctx2.fillStyle = '#ff0000';
+            ctx2.beginPath();
+            ctx2.arc(x0 + 400, y0 + 400, 8, 0, Math.PI * 2, true);
+            ctx2.fill();
+            ctx2.fillStyle = '#00ff00';
+            ctx2.beginPath();
+            ctx2.arc(x + 400, y + 400, 8, 0, Math.PI * 2, true);
+            ctx2.fill();
+            tid = setTimeout("update()", 40); //40 ミリ秒経過後に呼び出す 
+        }
+
+        function acceleration() {
+            vx *= 1.111111;
+            vy *= 1.111111;
+        }
+
+        function deceleration() {
+            vx *= 0.9;
+            vy *= 0.9;
+        }
+
+        function stop() {
+            path++;
+        }
+
+        function start() {
+            if (path) {
+                path = 0;
+                update();
+            }
+        }
+
+        ctx1.fillStyle = 'black';
+        ctx1.fillRect(0, 0, 800, 800);
+        //地球をキャンバス c1 に描画 
+        ctx1.fillStyle = '#0080ff';
+        ctx1.beginPath();
+        ctx1.arc(400, 400, 24, 0, Math.PI * 2, true);
+        ctx1.fill();
+    </script>
+</body>
+
+</html>

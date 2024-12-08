@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>もぐらたたき</title>
+    <style>
+        body {
+            color: #ffffff;
+            background-color: #202020;
+        }
+
+        input[value="START"] {
+            border: 2px solid #ffffff;
+            height: 40px;
+            width: 160px;
+            font-size: 20px;
+            border-radius: 10px;
+            color: #ffffff;
+            background-color: #202020;
+        }
+
+        input[type="text"] {
+            border: 2px solid #202020;
+            width: 20;
+            color: white;
+            font-size: 50px;
+            background-color: #202020;
+        }
+    </style>
+    <script type="text/javascript" src="zepto.min.js"></script>
+    <script type="text/javascript">
+        var imgs = document.getElementsByName("im"); // Image オブジェクトの配列
+        var st, en, score, tid = null; //開始時刻、終了時刻、得点、タイマーID
+        var timerInterval = "00:00:00";
+        var a1 = new Array(6); //もぐらを叩いたときの効果音を入れる配列
+        var a2 = new Audio("effect/katya.mp3");
+        var a3 = new Array(6);
+        var a4 = new Audio("effect/swing_swing.mp3");
+        a4.volume = 0.8;
+        var a5 = new Audio("effect/otoko.mp3");
+        var a6 = new Audio("effect/tousou.mp3");
+        var a7 = new Audio("effect/hansha.mp3");
+        var a1_cnt = 0; //効果音を鳴らしている配列要素の値
+        for (i = 0; i < 6; i++) {
+            a1[i] = new Audio("effect/bang.mp3"); //多重再生のため 6 個のオブジェクトを作成
+            a3[i] = new Audio("effect/yakkyo.mp3");
+        }
+        function init() {
+            score = 0;
+            for (i = 0; i < 16; i++) {
+                imgs[i].src = "effect/white.png";
+            }
+        }
+        function show() {
+            score = 0;
+            document.c0.src = "effect/0.png";
+            document.c1.src = "effect/0.png";
+            document.c2.src = "effect/0.png";
+            for (i = 0; i < 16; i++) {
+                if (Math.random() < 0.6) {
+                    imgs[i].src = "effect/kara.png";
+                } else if (Math.random() < 0.7) {
+                    imgs[i].src = "effect/mogura.png";
+                } else if (Math.random() < 0.7) {
+                    imgs[i].src = "effect/okotta.png";
+                } else if (Math.random() < 0.7) {
+                    imgs[i].src = "effect/chamogu.png";
+                } else { imgs[i].src = "effect/reisuu.png"; }
+            }
+            document.getElementById("nowtime").innerHTML = "00:00:00";
+        }
+        function game_start() {
+            if (timerInterval == "00:00:00") {
+                init();
+                st = new Date().getTime();
+                a2.play();
+                a4.play();
+                timerInterval = setInterval(updateTime, 10);
+            }
+            else {
+                document.getElementById("restart").innerHTML = "Getting ready for a restart...";
+                clearTimeout(tid);
+                tid = null;
+                a4.pause();
+                a4.currentTime = 0;
+                stopTimer();
+                if (score < 30) {
+                    setTimeout("show()", 1000);
+                }
+                setTimeout(function () {
+                    document.getElementById("restart").innerHTML = "";
+                }, 2000);
+                setTimeout("game_start()", 2000);
+            }
+        }
+        function update() {
+            do {
+                var place = parseInt(Math.random() * 16);
+            } while (imgs[place].src == "effect/white.png");
+            if (Math.random() < 0.7) {
+                imgs[place].src = "effect/mogura.png";
+            } else if (Math.random() < 0.7) {
+                imgs[place].src = "effect/okotta.png";
+            } else if (Math.random() < 0.7) {
+                imgs[place].src = "effect/chamogu.png";
+            } else { imgs[place].src = "effect/reisuu.png"; }
+            setTimeout(function () { imgs[place].src = "effect/white.png"; }, 999);
+            tid = setTimeout("update()", Math.random() * 999 + 1); //1 ～ 1000 秒経過後に呼び出す
+        }
+        function whack(i) {
+            if (tid == null) return; //ゲーム中でなければ何もしない
+            a1[a1_cnt].play(); //もぐらを叩いたときの効果音を再生。配列を使うと同時に 6 つの音が出せます。
+            a3[a1_cnt].play();
+            a1_cnt = (a1_cnt + 1) % 6; // a1_cnt が 0～5 の範囲になるように 6 になったら 0 に戻す
+            if (a1_cnt == 0) {
+                a2.play();
+            }
+            if (imgs[i].src.slice(-10) == "mogura.png") { //クリックしたところがもぐら画像
+                imgs[i].src = "effect/moguraD.png";
+                setTimeout(function () { imgs[i].src = "effect/white.png"; }, 200); //もぐら画像を消す
+                score++;
+            } else if (imgs[i].src.slice(-10) == "okotta.png") {
+                imgs[i].src = "effect/okottaD.png";
+                a7.play();
+                if (score == 0 || score == 1) {
+                    score = 0;
+                } else {
+                    score -= 2;
+                }
+                setTimeout(function () { imgs[i].src = "effect/white.png"; }, 200); //もぐら画像を消す
+            } else if (imgs[i].src.slice(-11) == "chamogu.png") {
+                imgs[i].src = "effect/chamoguD.png";
+                a5.play();
+                score += 3;
+                setTimeout(function () { imgs[i].src = "effect/white.png"; }, 200); //画像を消す
+            } else if (imgs[i].src.slice(-10) == "reisuu.png") {
+                imgs[i].src = "effect/reisuuD.png";
+                a6.play();
+                score = 0;
+                setTimeout(function () { imgs[i].src = "effect/white.png"; }, 200); //画像を消す
+            } else if (score > 0) score--; //もぐら画像でなければ減点する
+            document.c0.src = "effect/" + parseInt(score / 100) + ".png";
+            document.c1.src = "effect/" + (parseInt(score / 10) % 10) + ".png";
+            document.c2.src = "effect/" + (score % 10) + ".png";
+            if (score >= 30) { //30 点以上になったら終了
+                en = new Date().getTime();
+                clearTimeout(tid);
+                tid = null;
+                a4.pause();
+                a4.currentTime = 0;
+                time = (en - st) / 1000;
+                if (!document.getElementById("name").value) { //名前がまだ登録されていないときは名前を尋ねる
+                    name = prompt("あなたのタイムは" + time + "秒でした\n あなたのお名前を入れてください", "");
+                    document.cookie = "name=" + name + "; max-age=86400";
+                    document.getElementById("name").value = name;
+                } else {
+                    alert(document.getElementById("name").value + "さんのタイムは" + time + "秒でした。");
+                }
+                $.get("6.php?name=" + encodeURI(document.getElementById("name").value) + "&time=" + time, function () {
+                    ranking();
+                });
+                setTimeout("show()", 1000);
+                setTimeout("stopTimer()", 1000);
+            }
+        }
+        function ranking() {
+            _d = new Date().getTime(); //キャッシュ回避のため日時を利用する
+            $.get("6ranking.php?_d=" + _d, function (data) {
+                var a = data.split("\n"); //改行で区切る
+                var table = "<table border=1 cellspacing=0 cellpadding=2>";
+                table += "<tr><td>Rank</td><td>Time</td><td>Player</td><td>Session Date</td></tr>";
+                var rankmax = 10;
+                if (a.length < 10) {
+                    rankmax = a.length - 1;
+                }
+                for (i = 0; i < rankmax; i++) {
+                    var b = a[i].split(","); //カンマで区切る
+                    table += "<tr><td>#" + (i + 1) + "</td><td>" + b[2] + "</td><td>"
+                        + b[1] + "</td><td>" + b[0] + "</td></tr>";
+                }
+                table += "</table>";
+                document.getElementById("rankingAll").innerHTML = table;
+            });
+            $.get("6ranking.php?m=" + _d, function (data) {
+                var a = data.split("\n"); //改行で区切る
+                var table = "<table border=1 cellspacing=0 cellpadding=2>";
+                table += "<tr><td>Rank</td><td>Time</td><td>Player</td><td>Session Date</td></tr>";
+                var rankmax = 10;
+                if (a.length < 10) {
+                    rankmax = a.length - 1;
+                }
+                for (i = 0; i < rankmax; i++) {
+                    var b = a[i].split(","); //カンマで区切る
+                    table += "<tr><td>#" + (i + 1) + "</td><td>" + b[2] + "</td><td>"
+                        + b[1] + "</td><td>" + b[0] + "</td></tr>";
+                }
+                table += "</table>";
+                document.getElementById("rankingMonth").innerHTML = table;
+            });
+            $.get("6ranking.php?d=" + _d, function (data) {
+                var a = data.split("\n"); //改行で区切る
+                var table = "<table border=1 cellspacing=0 cellpadding=2>";
+                table += "<tr><td>Rank</td><td>Time</td><td>Player</td><td>Session Date</td></tr>";
+                var rankmax = 10;
+                if (a.length < 10) {
+                    rankmax = a.length - 1;
+                }
+                for (i = 0; i < rankmax; i++) {
+                    var b = a[i].split(","); //カンマで区切る
+                    table += "<tr><td>#" + (i + 1) + "</td><td>" + b[2] + "</td><td>"
+                        + b[1] + "</td><td>" + b[0] + "</td></tr>";
+                }
+                table += "</table>";
+                document.getElementById("rankingDay").innerHTML = table;
+            });
+        }
+        function updateTime() {
+            var currentTime = Date.now();
+            var elapsedTime = currentTime - st;
+            var minutes = Math.floor(elapsedTime / 60000);
+            var seconds = Math.floor((elapsedTime % 60000) / 1000);
+            var milliseconds = Math.floor((elapsedTime % 1000) / 10);
+
+            minutes = String(minutes).padStart(2, '0');
+            seconds = String(seconds).padStart(2, '0');
+            milliseconds = String(milliseconds).padStart(2, '0');
+            if (score < 30) {
+                document.getElementById("nowtime").innerHTML = minutes + ":" + seconds + ":" + milliseconds;
+            }
+        }
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = "00:00:00";
+        }
+    </script>
+</head>
+
+<body>
+    <h4 align="center">
+        <font size=5>もぐらを 30 匹たたくまでの時間を競うゲームです。</font>
+    </h4>
+    <table align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+        <tr>
+            <td colspan=2><input type="button" onClick="game_start()" value="START">　<span id="restart"></span></td>
+        </tr>
+        <tr>
+            <td colspan=2>
+                <font size="10">NAME：</font><input type="text" id="name" style="width: 210px; height: 50px;"
+                    onChange='document.cookie = "name=" + this.value + "; max-age=86400"'><br>
+                <script type="text/javascript">
+                    var name = document.cookie.replace(/(?:(?:^|.*;\s*)name\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+                    if (name) { //クッキーに名前が保存されているなら名前を入れる
+                        document.getElementById("name").value = name;
+                    }
+                </script>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <font size="10">SCORE：</font>
+            </td>
+            <td><img name="c0" draggable="false" width="50"><img name="c1" draggable="false" width="50"><img name="c2"
+                    draggable="false" width="50"></td>
+        </tr>
+        <tr>
+            <td colspan=2>
+                <font size="10">TIME：<span id="nowtime"></span></font>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <br>
+    <table align="center">
+        <tr>
+            <td>
+                <div align="center" style="line-height:0">
+                    <img name="im" onClick="whack(0)" draggable="false">
+                    <img name="im" onClick="whack(1)" draggable="false">
+                    <img name="im" onClick="whack(2)" draggable="false">
+                    <img name="im" onClick="whack(3)" draggable="false"><br>
+                    <img name="im" onClick="whack(4)" draggable="false">
+                    <img name="im" onClick="whack(5)" draggable="false">
+                    <img name="im" onClick="whack(6)" draggable="false">
+                    <img name="im" onClick="whack(7)" draggable="false"><br>
+                    <img name="im" onClick="whack(8)" draggable="false">
+                    <img name="im" onClick="whack(9)" draggable="false">
+                    <img name="im" onClick="whack(10)" draggable="false">
+                    <img name="im" onClick="whack(11)" draggable="false"><br>
+                    <img name="im" onClick="whack(12)" draggable="false">
+                    <img name="im" onClick="whack(13)" draggable="false">
+                    <img name="im" onClick="whack(14)" draggable="false">
+                    <img name="im" onClick="whack(15)" draggable="false"><br>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <script type="text/javascript">
+        show();
+    </script>
+    <br>
+    <table align="center">
+        <tr>
+            <td><b>RANKINGS</b></td>
+            <td><b>MONTHLY RANKINGS</b></td>
+            <td><b>TODAYS RANKINGS</b></td>
+        </tr>
+        <tr>
+            <td>
+                <div id="rankingAll"></div>
+            </td>
+            <td>
+                <div id="rankingMonth"></div>
+            </td>
+            <td>
+                <div id="rankingDay"></div>
+            </td>
+        </tr>
+        <script type="text/javascript">
+            ranking();
+        </script>
+    </table><br>
+    <table align="center" cellspacing="0" cellpadding="0">
+        <tr>
+            <td>
+                <b>HELP</b>
+            </td>
+        </tr>
+        <tr>
+            <td colspan=3>1. This is a game where you compete to hit 30 moles <font color="dodgerblue">as quickly as
+                    possible</font>.<br>
+                2. If there is no character where you hit, you will get -1 point.<br>
+                3. The following are the characters that appear in the game.↓<br><br></td>
+        </tr>
+        <tr>
+            <td><img src="effect/mogura.png" draggable="false"></td>
+            <td align="center">
+                <font size=6 color="dodgerblue">Hat<br>Mole</font>
+            </td>
+            <td>
+                <font size=5>If you hit this mole, you will get +1 point.<br>
+                    The probability of this character appearance is set to 70%.</font>
+            </td>
+        </tr>
+        <tr>
+            <td><img src="effect/okotta.png" draggable="false"></td>
+            <td align="center">
+                <font size=6 color="dodgerblue">Angry<br>Mole</font>
+            </td>
+            <td>
+                <font size=5>If you hit this mole, you will get -2 point.<br>
+                    The probability of this character appearance is set to 21%.</font>
+            </td>
+        </tr>
+        <tr>
+            <td><img src="effect/chamogu.png" draggable="false"></td>
+            <td align="center">
+                <font size=6 color="dodgerblue">English<br>Teacher　</font>
+            </td>
+            <td>
+                <font size=5>If you hit this man, you will get +3 point.<br>
+                    The probability of this character appearance is set to 6.3%.</font>
+            </td>
+        </tr>
+        <tr>
+            <td><img src="effect/reisuu.png" draggable="false"></td>
+            <td align="center">
+                <font size=6 color="dodgerblue">Demon<br>Thief</font>
+            </td>
+            <td>
+                <font size=5>If you hit this demon, you will lost all point.<br>
+                    The probability of this character appearance is set to 2.7%.</font>
+            </td>
+        </tr>
+    </table>
+    <br><br>
+</body>
+
+</html>

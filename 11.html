@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>観光案内マップ</title>
+    <script type="text/javascript"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJ1Q5OJfYlptnd1B9Y_Lt3_hOobV_jTMU&libraries=geometry&language=ja">
+        </script>
+    <style type="text/css">
+        * {
+            margin: 0;
+        }
+
+        html {
+            margin: 0;
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            height: 100%;
+            background-color: rgb(0, 167, 100);
+        }
+
+        input[type="text"] {
+            background-color: rgb(0, 167, 100);
+        }
+
+        input[type="button"] {
+            color: white;
+            background-color: black;
+        }
+
+        .header {
+            border-bottom: double 5px black;
+        }
+    </style>
+    <script type="text/javascript" src="zepto.min.js"></script>
+    <script type="text/javascript">
+        var map;
+        var cen_lat, cen_lng, zoom = 7; //地図の中心の緯度と経度、縮尺 
+        var spotname = []; //観光ポイントの名前 
+        var spotlatlng = []; //観光ポイントの緯度・経度 
+        var spotmarker = []; //観光ポイントのマーカー 
+        var spotdkyori; //観光ポイントまでの直線距離 
+        var spotrkyori; //観光ポイントまでの路線距離 
+        var spotorder; //観光ポイントまでの直線距離の小さい順 
+        var start; //現在地 
+        var sync_i; //現在表示中の番号 
+        var dline = null; //現在地から観光ポイントまでの直線 
+        var rline = null; //現在地から観光ポイントまでの道路 
+        var gpscrc = null; //GPS が示す現在地のサークル 
+        var minlat, minlng, maxlat, maxlng;
+        var startMarker;
+        var goalMarker;
+        var currentInfoWindow = null;
+        var table = null;
+        var listId = 0;
+
+        function init() {
+            google.maps.event.addListener(map, 'click',
+                function (event) {
+                    if (startMarker) { startMarker.setMap(null) };
+                    startMarker = new google.maps.Marker({
+                        position: event.latLng,
+                        draggable: true,
+                        icon: {
+                            url: 'effect/map-pin-start.png',
+                            size: new google.maps.Size(80, 50),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(12, 40)
+                        },
+                        map: map
+                    });
+                    document.form1.start.value = startMarker.getPosition().lat() + "," + startMarker.getPosition().lng();
+                }
+            );
+            google.maps.event.addListener(map, 'rightclick',
+                function (event) {
+                    if (goalMarker) { goalMarker.setMap(null) };
+                    goalMarker = new google.maps.Marker({
+                        position: event.latLng,
+                        draggable: true,
+                        icon: {
+                            url: 'effect/map-pin-right.png',
+                            size: new google.maps.Size(80, 50),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(12, 40)
+                        },
+                        map: map
+                    });
+                    if (document.form1.start.value.match(/^[0-9\., ]+$/)) { //緯度・経度が入力されている 
+                        var p = document.form1.start.value.split(",");
+                        start = new google.maps.LatLng(p[0], p[1]);
+                        goal(goalMarker.latLng);
+                    } else { //地名から緯度・経度に変換 
+                        start = document.form1.start.value;
+                        new google.maps.Geocoder().geocode({ address: start }, function (results, status) {
+                            if (status == google.maps.GeocoderStatus.OK) {
+                                start = results[0].geometry.location;
+                                goal(goalMarker.latLng);
+                            } else {
+                                alert('Faild：' + status);
+                            }
+                        });
+                    }
+                }
+            );
+            getlist();
+            gps();
+        }
+
+        function getlist(account) // account は Linux のアカウント 
+        {
+            //データ初期化 
+            for (i = 0; i < spotname.length; i++) spotmarker[i].setMap(null);
+            spotname = [];
+            spotlatlng = [];
+            spotmarker = [];
+            var URLlist = "list.txt"; // account が空のときは同じフォルダ内にある list.txt を参照する 
+            if (account) URLlist = "/~" + account + "/webpro/list.txt"; //他の人の list.txt を取得する 
+            _d = new Date().getTime();
+            $.get(URLlist + "?_d=" + _d, function (data) {
+                var a = data.split("\n");
+                table = '<h1 align="center"><font size="3">観光スポット</font></h1>' + "<table border=1 cellspacing=0 cellpadding=1>";
+                table += "<tr><td>番号</td><td>地名</td><td>メモ</td></tr>";
+                minlat = minlng = 180;
+                maxlat = maxlng = 0;
+                for (i = 0; i < a.length - 1; i++) {
+                    var b = a[i].split(",");
+                    table += "<tr><td>" + (i + 1) + "</td><td>" + b[0] + "</td><td>" + b[3] + "</td></tr>";
+                    if (isFinite(b[1]) && isFinite(b[2])) {
+                        spotname.push(b[0]);
+                        var lat = parseFloat(b[1]);
+                        var lng = parseFloat(b[2]);
+                        spotlatlng.push(new google.maps.LatLng(lat, lng));
+                        if (lat < minlat) minlat = lat;
+                        if (lat > maxlat) maxlat = lat;
+                        if (lng < minlng) minlng = lng;
+                        if (lng > maxlng) maxlng = lng;
+                        var marker = new google.maps.Marker({
+                            position: spotlatlng[i],
+                            icon: {
+                                url: 'effect/map-pin.png',
+                                size: new google.maps.Size(80, 50),
+                                origin: new google.maps.Point(0, 0),
+                                anchor: new google.maps.Point(12, 40)
+                            },
+                            animation: google.maps.Animation.DROP,
+                            map: map
+                        });
+                        spotmarker.push(marker);
+                        attachMessage(marker, b[0]);
+                    }
+                }
+                cen_lat = (minlat + maxlat) / 2;
+                cen_lng = (minlng + maxlng) / 2;
+                map.setCenter(new google.maps.LatLng(cen_lat, cen_lng));
+                spotdkyori = new Array(spotname.length);
+                spotrkyori = new Array(spotname.length);
+                spotorder = new Array(spotname.length);
+                table += "</table>";
+                if (listId == 0) {
+                    document.getElementById("list").innerHTML = table;
+                } else {
+                    explain();
+                }
+            });
+        }
+
+        function spotList() {
+            listId = 0;
+            document.getElementById("list").innerHTML = table;
+        }
+
+        function explain() {
+            listId = 1;
+            var explain = '<h1 align="center"><font size="3">説明</font></h1>' +
+                '<table><tr><td>1.これはお気に入りの観光スポットが表示されるマップです。</td></tr>' +
+                '<tr><td>2.左クリックを押すと、左クリックを押した場所に黄色いピンが表示されます。<br>「近く」ボタンを押すと、黄色いピンに最も近い観光スポット' +
+                '<br>までの距離と道順が表示されるようになります。<br>「次」ボタンを押すと、次に黄色いピンに近い観光スポット<br>までの距離と道順が表示されるようになります。</td></tr><tr><td>' +
+                '3.右クリックを押すと、右クリックを押した場所に緑色のピンが表示されます。<br>特に、黄色いピンが表示されているときには、黄色いピンから緑色のピン' +
+                '<br>までの距離と道順が表示されるようになります。</td></tr><tr><td>4.赤いピンを押すと、そのピンの地名が ズームされて表示されます。' +
+                '<br>特に、黄色いピンが表示されているときには、黄色いピンからの直線距離も<br>表示されるようになります。</td></tr><tr><td>' +
+                '5.下のボタンで、他の人のお気に入りの観光スポットも見ることができます。</td></tr></table>';
+            document.getElementById("list").innerHTML = explain;
+        }
+
+        function attachMessage(marker, message) {
+            marker.addListener('click', function () {
+                if (currentInfoWindow) {
+                    currentInfoWindow.close();
+                }
+                var infowindow = new google.maps.InfoWindow({
+                    content: message,
+                    pixelOffset: new google.maps.Size(-28, 12)
+                });
+                infowindow.open(marker.get('map'), marker);
+                currentInfoWindow = infowindow;
+                marker.get('map').setZoom(10);
+                marker.get('map').setCenter(marker.getPosition());
+            });
+        }
+
+        watchID = navigator.geolocation.watchPosition(
+            function (pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                var acc = pos.coords.accuracy;
+                if (gpscrc) {
+                    gpscrc.setOptions({ center: new google.maps.LatLng(lat, lng), radius: acc });
+                } else {
+                    gpscrc = new google.maps.Circle({
+                        center: new google.maps.LatLng(lat, lng),
+                        fillColor: '#0000ff', // 塗りつぶし色 
+                        fillOpacity: 0.05, // 塗りつぶし透過度（0: 透明 ⇔ 1:不透明） 
+                        map: map, // 表示させる地図（google.maps.Map） 
+                        radius: acc, // 半径（ｍ） 
+                        strokeColor: '#0000ff', // 外周色 
+                        strokeOpacity: 1, // 外周透過度（0: 透明 ⇔ 1:不透明） 
+                        strokeWeight: 1 // 外周太さ（ピクセル） 
+                    });
+                }
+            }, null, { enableHighAccuracy: true }
+        );
+
+        function gps() {
+            navigator.geolocation.getCurrentPosition(
+                function (pos) { //位置情報を取得できた場合 
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
+                    var acc = pos.coords.accuracy;
+                    document.form1.start.value = lat + "," + lng + "," + acc;
+                },
+                function (error) { //位置情報が取得できない場合 
+                    var err_msg = "";
+                    switch (error.code) {
+                        case 1: err_msg = "位置情報の利用が許可されていません"; break;
+                        case 2: err_msg = "デバイスの位置が判定できません"; break;
+                        case 3: err_msg = "タイムアウトしました"; break;
+                    }
+                    document.form1.start.value = err_msg;
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 600000 }
+            );
+        }
+
+        function makeroute(geoid) {
+            var goal = spotlatlng[geoid];
+            var dService = new google.maps.DirectionsService();
+            var request = { origin: start, destination: goal, travelMode: google.maps.TravelMode.DRIVING };
+            dService.route(request, function (response, status) {
+                if (status == google.maps.DirectionsStatus.OK) {
+                    var p, kyori = 0;
+                    var points = new Array((p = response.routes[0].overview_path).length);
+                    for (var i = 0; i < points.length; i++) points[i] = new google.maps.LatLng(p[i].lat(), p[i].lng());
+                    if (dline) dline.setMap(null);
+                    dline = new google.maps.Polyline({ path: [start, goal], strokeWeight: 1, strokeColor: '#0000ff', strokeOpacity: "0.5" });
+                    dline.setMap(map);
+                    if (rline) rline.setMap(null);
+                    rline = new google.maps.Polyline({ path: points, strokeWeight: 1, strokeColor: '#ff0000', strokeOpacity: "1.0" });
+                    rline.setMap(map);
+                    for (j = 1; j < points.length; j++) {
+                        kyori += google.maps.geometry.spherical.computeDistanceBetween(points[j - 1], points[j]);
+                    }
+                    spotrkyori[geoid] = Math.round(kyori);
+                    document.getElementById('dkyori').innerHTML = spotdkyori[geoid];
+                    document.getElementById('rkyori').innerHTML = spotrkyori[geoid];
+                    spotmarker[geoid].setOptions({
+                        icon: {
+                            url: 'effect/map-pin.png',
+                            size: new google.maps.Size(80, 50),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(12, 40)
+                        }
+                    });
+                } else {
+                    alert("認識できませんでした。" + spotname[geoid]);
+                }
+            });
+        }
+
+        function sort() //直線距離の小さい順に並べる
+        {
+            for (i = 0; i < spotname.length; i++) spotorder[i] = i;
+            var t = spotdkyori.concat(); //配列のコピー
+            for (i = 0; i < t.length - 1; i++) { //選択ソート 
+                for (j = i + 1; j < t.length; j++) {
+                    if (t[j] < t[i]) {
+                        var z = t[j]; t[j] = t[i]; t[i] = z;
+                        var z = spotorder[j]; spotorder[j] = spotorder[i]; spotorder[i] = z;
+                    }
+                }
+            }
+        }
+
+        function goal(spotorder) {
+            var start = new google.maps.LatLng(startMarker.getPosition().lat(), startMarker.getPosition().lng());
+            var goal = new google.maps.LatLng(goalMarker.getPosition().lat(), goalMarker.getPosition().lng())
+            var dService = new google.maps.DirectionsService();
+            var request = { origin: start, destination: goal, travelMode: google.maps.TravelMode.DRIVING };
+            dService.route(request, function (response, status) {
+                if (status == google.maps.DirectionsStatus.OK) {
+                    var p, kyori = 0;
+                    var points = new Array((p = response.routes[0].overview_path).length);
+                    for (var i = 0; i < points.length; i++) points[i] = new google.maps.LatLng(p[i].lat(), p[i].lng());
+                    if (dline) dline.setMap(null);
+                    dline = new google.maps.Polyline({ path: [start, goal], strokeWeight: 1, strokeColor: '#0000ff', strokeOpacity: "0.5" });
+                    dline.setMap(map);
+                    if (rline) rline.setMap(null);
+                    rline = new google.maps.Polyline({ path: points, strokeWeight: 1, strokeColor: '#ff0000', strokeOpacity: "1.0" });
+                    rline.setMap(map);
+                    for (j = 1; j < points.length; j++) {
+                        kyori += google.maps.geometry.spherical.computeDistanceBetween(points[j - 1], points[j]);
+                    }
+                    var distance = google.maps.geometry.spherical.computeDistanceBetween(start, goal); //直線距離
+                    document.getElementById('dkyori').innerHTML = Math.round(distance);
+                    document.getElementById('rkyori').innerHTML = Math.round(kyori);
+                } else {
+                    alert("認識できませんでした。" + spotname[geoid]);
+                }
+            });
+            document.getElementById('name').innerHTML = spotname[spotorder];
+        }
+
+        function _nearby() // nearby()から呼ばれる
+        {
+            for (i = 0; i < spotname.length; i++) {
+                var distance = google.maps.geometry.spherical.computeDistanceBetween(start, spotlatlng[i]); //直線距離
+                spotdkyori[i] = Math.round(distance);
+                spotmarker[i].setOptions({
+                    icon: {
+                        url: 'effect/map-pin.png',
+                        size: new google.maps.Size(80, 50),
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(12, 40) // アンカー位置をアイコンの中心に設定
+                    }
+                });
+                attachMessage(spotmarker[i], spotname[i] + '(直線' + spotdkyori[i] + 'm)');
+            }
+            sort();
+            sync_i = 0;
+            makeroute(spotorder[sync_i]);
+            document.getElementById('name').innerHTML = spotname[spotorder[sync_i]];
+        }
+
+        function nearby() {
+            if (document.form1.start.value.match(/^[0-9\., ]+$/)) { //緯度・経度が入力されている 
+                var p = document.form1.start.value.split(",");
+                start = new google.maps.LatLng(p[0], p[1]);
+                _nearby();
+            } else { //地名から緯度・経度に変換 
+                start = document.form1.start.value;
+                new google.maps.Geocoder().geocode({ address: start }, function (results, status) {
+                    if (status == google.maps.GeocoderStatus.OK) {
+                        start = results[0].geometry.location;
+                        _nearby();
+                    } else {
+                        alert('Faild：' + status);
+                    }
+                });
+            }
+        }
+
+        function next() {
+            sync_i++;
+            if (sync_i >= spotname.length) sync_i = 0;
+            makeroute(spotorder[sync_i]);
+            document.getElementById('name').innerHTML = spotname[spotorder[sync_i]];
+        }
+    </script>
+</head>
+
+<body onload="init()">
+    <h1 align="center">
+        <font size="5"><span class="header">観光案内マップ</span></font>
+    </h1><br>
+    <form name="form1">
+        スタート：<input type="text" name="start" size="24">　(例 1：松山駅、例 2：33.849231, 132.769846)　
+        <input type="button" value="GPS 取得" onclick="gps()">
+        <input type="button" value="近く" onclick="nearby()">
+        <input type="button" value=" 次 " onclick="next()">
+        <input type="button" value="全域表示"
+            onclick="zoom=7;map.setOptions({center:new google.maps.LatLng(cen_lat,cen_lng),zoom:7})">
+        <input type="button" value="広域" onclick="zoom--;if(zoom<0)zoom=0;map.setOptions({zoom:zoom})">
+        <input type="button" value="詳細" onclick="zoom++;if(zoom>21)zoom=21;map.setOptions({zoom:zoom})">　
+        場所：<span id="name"></span>(直線距離 <span id="dkyori">0</span>m、道路距離 <span id="rkyori">0</span>m)　
+        <input type="button" value="スポット" onclick="spotList()">
+        <input type="button" value="説明" onclick="explain()"><br>
+    </form>
+    <div id="map_canvas" style="float:left;height:85%;width:66%;border:solid 1px;"></div>
+    <div id="list" style="float:left;height:85%;width:33%;overflow-x:scroll;overflow-y:scroll;"></div>
+    <script type="text/javascript">
+        map = new google.maps.Map(document.getElementById("map_canvas"), { zoom: zoom, mapTypeId: google.maps.MapTypeId.TERRAIN });
+        getlist();
+        gps();
+    </script>
+    <div style="background-color:rgb(0, 167, 100);white-space:nowrap;width:100%;overflow-x:scroll;">
+        <?php 
+        foreach(glob("/home/j*/public_html/webpro/list.txt") as $row){ 
+         $a = explode('/', $row); // '/'で分割 
+         $ac = $a[2]; // 2 つ目の要素のアカウントを取り出す 
+         echo "<input type=\"button\" value=\"$ac\" onClick=\"getlist('$ac')\">\n"; 
+         } 
+        ?>
+    </div>
+</body>
+
+</html>

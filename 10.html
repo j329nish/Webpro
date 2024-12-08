@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>公共交通機関運行管理システム</title>
+    <script type="text/javascript"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJ1Q5OJfYlptnd1B9Y_Lt3_hOobV_jTMU&libraries=geometry&language=ja">
+        </script>
+</head>
+
+<body>
+    <h4 align="center">
+        <font size=5>公共交通機関運行管理システム</font>
+    </h4>
+    <table align="center">
+        <tr>
+            <td>
+                <div id="map_canvas" style="height:600px; width:900px;"></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                縮尺：
+                <input type="button" value="全域"
+                    onclick="map.setOptions({center:new google.maps.LatLng(cen_lat,cen_lng), zoom:13})">
+                <input type="button" value="広域" onclick="zoom--;if(zoom<0)zoom=0;map.setOptions({zoom:zoom})">
+                <input type="button" value="詳細" onclick="zoom++;if(zoom>21)zoom=21;map.setOptions({zoom:zoom})">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                時間の進み具合：
+                <input type="radio" name="r1" onclick="speed=1" checked>等倍
+                <input type="radio" name="r1" onclick="speed=2">2 倍速
+                <input type="radio" name="r1" onclick="speed=6">6 倍速
+                <input type="radio" name="r1" onclick="speed=10">10 倍速
+                <input type="radio" name="r1" onclick="speed=30">30 倍速
+                <input type="radio" name="r1" onclick="speed=60">60 倍速
+            </td>
+        </tr>
+        <tr>
+            <td>
+                時間：<span id="val">6:02</span>　<input style="width:80%" type="range" id="num" min="21600" max="86400"
+                    step="30" value="21600" oninput="changeValue(this.value)" onchange="changeValue(this.value)">
+            </td>
+        </tr>
+    </table>
+    <br>
+    <h4 align="center">
+        <font size=3>路線情報</font>
+    </h4>
+    <table align="center" border="1">
+        <tr align="center">
+            <td>
+                表記
+            </td>
+            <td>
+                路線
+            </td>
+            <td>
+                路線距離(m)
+            </td>
+            <td>
+                場所
+            </td>
+        </tr>
+        <tr align="center">
+            <td><img src="effect/busstop01.png" height="50" draggable="false"></td>
+            <td>
+                道後温泉-松山空港<br>(松山空港リムジンバス)
+            </td>
+            <td>
+                <span id="kyori0"></span>
+            </td>
+            <td>
+                <input type="button" value="道後温泉"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.850000, 132.785200)})">
+                <input type="button" value="大街道"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.841030, 132.769234)})">
+                <input type="button" value="JR 松山駅"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.84010992205497, 132.75201479209903)})">
+                <input type="button" value="松山空港"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.829535, 132.704035)})">
+            </td>
+        </tr>
+        <tr align="center">
+            <td><img src="effect/busstop11.png" height="50" draggable="false"></td>
+            <td>
+                松山空港-道後温泉<br>(松山空港リムジンバス)
+            </td>
+            <td>
+                <span id="kyori1"></span>
+            </td>
+            <td>
+                <input type="button" value="松山空港"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.829535, 132.704035)})">
+                <input type="button" value="JR 松山駅"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.84010992205497, 132.75201479209903)})">
+                <input type="button" value="愛媛新聞社前"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.840212123641294, 132.75771110610486)})">
+                <input type="button" value="松山市駅"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.83539, 132.76203)})"><br>
+                <input type="button" value="大街道"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.841030, 132.769234)})">
+                <input type="button" value="南町県民文化会館前"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.84732, 132.77944)})">
+                <input type="button" value="道後温泉"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.850000, 132.785200)})">
+            </td>
+        </tr>
+        <tr align="center">
+            <td><img src="effect/busstop41.png" height="50" draggable="false"></td>
+            <td>
+                高浜-松山市駅<br>(伊予鉄高浜線)
+            </td>
+            <td>
+                <span id="kyori4"></span>
+            </td>
+            <td>
+                <input type="button" value="高浜駅"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.88334834789753, 132.70214820105872)})">
+                <input type="button" value="梅津寺"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.875001802586496, 132.70741630594912)})">
+                <input type="button" value="港山"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.86955679027052, 132.71295362874352)})">
+                <input type="button" value="三津"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.86408833751424, 132.71973912595234)})"><br>
+                <input type="button" value="山西"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.85554880346631, 132.72407712067545)})">
+                <input type="button" value="西衣山"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.85018731972967, 132.73436071999618)})">
+                <input type="button" value="衣山"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.85226413991578, 132.74418500249843)})">
+                <input type="button" value="古町"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.84724153914856, 132.75528516529315)})">
+                <input type="button" value="大手町"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.83986800651853, 132.7554838630102)})">
+                <input type="button" value="松山市駅"
+                    onclick="map.setOptions({center:new google.maps.LatLng(33.835671321235175, 132.76204189012992)})">
+            </td>
+        </tr>
+    </table>
+    <h4 align="center">
+        <font size=3>時刻表</font>
+    </h4>
+    <table align="center">
+        <tr>
+            <td valign="top">
+                <table id="busSchedule0" border="1">
+                    <tr>
+                        <td colspan="2">道後温泉-松山空港<br>(松山空港リムジンバス)</td>
+                    </tr>
+                    <tr>
+                        <td>出発</td>
+                        <td>到着</td>
+                    </tr>
+                    <tbody>
+                    </tbody>
+                </table>
+            </td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+            <td valign="top">
+                <table id="busSchedule1" border="1">
+                    <tr>
+                        <td colspan="2">松山空港-道後温泉<br>(松山空港リムジンバス)</td>
+                    </tr>
+                    <tr>
+                        <td>出発</td>
+                        <td>到着</td>
+                    </tr>
+                    <tbody>
+                    </tbody>
+                </table>
+            </td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+            <td valign="top">
+                <table id="busSchedule4" border="1">
+                    <tr>
+                        <td colspan="2">高浜-松山市駅<br>(伊予鉄高浜線)</td>
+                    </tr>
+                    <tr>
+                        <td>出発</td>
+                        <td>到着</td>
+                    </tr>
+                    <tbody>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <script type="text/javascript">
+        function changeValue(value) {
+            var hh = parseInt(value / 3600);
+            var mm = ("0" + parseInt((value - hh * 3600) / 60)).slice(-2);
+            var ss = ("0" + value % 60).slice(-2);
+            document.getElementById("val").innerHTML = hh + ":" + mm + ":" + ss;
+            time = parseInt(value);
+        } 
+    </script>
+    <script type="text/javascript">
+        var cen_lat = 33.85554880346631; //地図の中心の緯度
+        var cen_lng = 132.73436071999618; //地図の中心の経度 
+        var zoom = 13; //地図の縮尺
+        var busstop = new Array(6); //バス停
+        var bus = new Array(6); //バスのマーカー 
+        var road = new Array(6); //路線情報(緯度と経度を別にしたもの) 
+        var road2 = new Array(6); //路線情報(緯度と経度をセットにしたもの) 
+        var kyori = new Array(6); //路線のスタート地点から路線上の各ポイント地点までの距離 
+        var allkyori = new Array(6); //路線のスタート地点からゴール地点までの距離 
+        var bus_d = new Array(6); //路線バスの出発時刻 
+        var bus_a = new Array(6); //路線バスの到着時刻
+        var bus_d = [];
+        var bus_a = [];
+        var rcolor = ['#0000ff', 'red', 'red', 'red', 'green']; //路線の色 
+        var time = 6 * 3600 + 2 * 60; //0:00 は 0、24:00 は 86400、6:02 にしておく 
+        var speed = 1; //時間の進み具合の倍率
+    </script>
+    <script type="text/javascript" src="bus0.js"></script>
+    <script type="text/javascript">
+        //初期化 
+        var map = new google.maps.Map(document.getElementById("map_canvas"), {
+            zoom: zoom, center: new google.maps.LatLng(cen_lat, cen_lng), mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+        //バス停のアイコン表示 
+        function attachMessage(marker, msg) {
+            marker.addListener('click', function (event) {
+                new google.maps.InfoWindow({ content: msg }).open(map, marker);
+            });
+        }
+
+        for (i = 0; i < bus_d.length; i++) {
+            if (i == 0 || i == 1 || i == 4) {
+                for (j = 0; j < busstop[i].length; j += 3) {
+                    var marker = new google.maps.Marker({
+                        position: new google.maps.LatLng(busstop[i][j], busstop[i][j + 1]),
+                        map: map, title: busstop[i][j + 2], icon: 'effect/busstop' + i + '.png'
+                    });
+                    attachMessage(marker, busstop[i][j + 2]); // マウスクリックでバス停名を表示 
+                }
+            }
+
+            //路線表示
+            road2[i] = new Array(road[i].length / 2);
+            for (j = 0; j < road2[i].length; j++) {
+                road2[i][j] = new google.maps.LatLng(road[i][j * 2], road[i][j * 2 + 1]);
+            }
+            if (i == 0 || i == 1 || i == 4) {
+                new google.maps.Polyline({ path: road2[i], strokeWeight: 2, strokeColor: rcolor[i], strokeOpacity: "0.5" }).setMap(map);
+            }
+
+            //路線距離テーブルの作成
+            kyori[i] = new Array(road2[i].length);
+            kyori[i][0] = 0;
+            for (j = 1; j < kyori[i].length; j++) {
+                kyori[i][j] = kyori[i][j - 1] + google.maps.geometry.spherical.computeDistanceBetween(road2[i][j - 1], road2[i][j]);
+            }
+
+            // バスの路線距離を表示
+            if (i == 0 || i == 1 || i == 4) {
+                allkyori[i] = kyori[i][kyori[i].length - 1];
+                document.getElementById('kyori' + i).innerHTML = Math.round(allkyori[i]);
+            }
+
+            // バスのマーカー作成
+            if (i == 4) {
+                bus[i] = new google.maps.Marker({
+                    map: map, icon: new google.maps.MarkerImage('effect/bus1.png',
+                        new google.maps.Size(40, 20), //size(アイコンサイズ) 
+                        new google.maps.Point(0, 0), //origin(アイコンのどの部分を起点として表示するか)
+                        new google.maps.Point(20, 10) //anchor(マーカーの position を画像の位置の中心とする) 
+                    )
+                });
+            } else {
+                bus[i] = new google.maps.Marker({
+                    map: map, icon: new google.maps.MarkerImage('effect/bus0.png',
+                        new google.maps.Size(40, 20), //size(アイコンサイズ) 
+                        new google.maps.Point(0, 0), //origin(アイコンのどの部分を起点として表示するか)
+                        new google.maps.Point(20, 10) //anchor(マーカーの position を画像の位置の中心とする) 
+                    )
+                });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            for (var j = 0; j < bus_d.length; j++) {
+                var k = j;
+                if (j == 2 || j == 3) {
+                    k = 1;
+                }
+                var busD = bus_d[j];
+                var busA = bus_a[j];
+                var tableBody = document.querySelector("#busSchedule" + k + " tbody");
+
+                for (var i = 0; i < busD.length; i++) {
+                    var row = document.createElement("tr");
+
+                    var cellD = document.createElement("td");
+                    cellD.textContent = formatTime(busD[i]);
+                    row.appendChild(cellD);
+
+                    var cellA = document.createElement("td");
+                    cellA.textContent = formatTime(busA[i]);
+                    row.appendChild(cellA);
+
+                    tableBody.appendChild(row);
+                }
+            }
+        });
+
+        function formatTime(time) {
+            var hours = Math.floor(time / 100);
+            var minutes = time % 100;
+            return ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2);
+        }
+
+        //バスの移動 
+        function move() {
+            var hh = parseInt(time / 3600);
+            var mm = ("0" + parseInt((time - hh * 3600) / 60)).slice(-2);
+            var ss = ("0" + parseInt(time) % 60).slice(-2);
+            document.getElementById("num").value = parseInt(time);
+            document.getElementById("val").innerHTML = hh + ":" + mm + ":" + ss; //スライダーのつまみ位置を変更F
+            time += speed * 250 / 1000;
+            for (k = 0; k < bus_d.length; k++) {
+                var bus_pos = 0; // バスの現在のスタート地点からの距離
+                for (i = 0; i < bus_d[k].length; i++) {
+                    var hhmm = parseInt(time / 3600) * 100 + parseInt((time % 3600) / 60);
+                    if ((bus_d[k][i] <= hhmm) && (hhmm <= bus_a[k][i])) { // バスの運行時間内であれば 
+                        var departure_time = parseInt(bus_d[k][i] / 100) * 3600 + (bus_d[k][i] % 100) * 60;
+                        var arrival_time = parseInt(bus_a[k][i] / 100) * 3600 + (bus_a[k][i] % 100) * 60;
+                        bus_pos = allkyori[0] * (time - departure_time) / (arrival_time - departure_time);
+                        break;
+                    }
+                }
+
+                console.log('i = ' + i + ' bus_pos = ' + bus_pos); // デバッグで利用 
+
+                for (j = 1; j < kyori[k].length; j++) {
+                    if (bus_pos < kyori[k][j]) { //バスが居る路線区間を探す
+                        var lat = road[k][j * 2 - 2] + (road[k][j * 2] - road[k][j * 2 - 2]) * (bus_pos - kyori[k][j - 1]) / (kyori[k][j] - kyori[k][j - 1]); //latとlngを計算する式
+                        var lng = road[k][j * 2 - 1] + (road[k][j * 2 + 1] - road[k][j * 2 - 1]) * (bus_pos - kyori[k][j - 1]) / (kyori[k][j] - kyori[k][j - 1]); // 修正箇所
+                        var angle = Math.atan2(road[k][j * 2] - road[k][j * 2 - 2], road[k][j * 2 + 1] - road[k][j * 2 - 1]);
+                        var degree = (angle * (180 / Math.PI) + 360) % 360;
+                        if (k == 4) {
+                            var istrain = 1;
+                        } else {
+                            var istrain = 0;
+                        }
+                        if (degree >= 337.5 || degree < 22.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '4.png');
+                        } else if (degree >= 22.5 && degree < 67.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '3.png');
+                        } else if (degree >= 67.5 && degree < 112.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '2.png');
+                        } else if (degree >= 112.5 && degree < 157.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '1.png');
+                        } else if (degree >= 157.5 && degree < 202.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '.png');
+                        } else if (degree >= 202.5 && degree < 247.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '7.png');
+                        } else if (degree >= 247.5 && degree < 292.5) {
+                            bus[k].setIcon('effect/bus' + istrain + '6.png');
+                        } else {
+                            bus[k].setIcon('effect/bus' + istrain + '5.png');
+                        }
+                        bus[k].setPosition(new google.maps.LatLng(lat, lng)); //バスのアイコンを移動
+                        break; //ループを抜ける
+                    }
+                }
+            }
+
+            setTimeout("move()", 250); //250 ミリ秒間隔 
+        }
+        move(); 
+    </script>
+</body>
+
+</html>

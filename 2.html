@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        .spacer {
+            height: 60px;
+        }
+
+        .stripe {
+            height: 1000px;
+            margin: 30px 0;
+            background: repeating-linear-gradient(-45deg, rgb(95, 60, 36) 0, rgb(111, 55, 15) 2px, rgb(117, 49, 3) 4px, rgb(132, 66, 19) 6px);
+        }
+
+        table {
+            border-radius: 30px;
+            border: 3px solid peru;
+            color: white;
+            overflow: hidden;
+        }
+
+        #table3 td {
+            border: 1px solid peru;
+        }
+
+        .header {
+            border-bottom: double 5px peru;
+        }
+
+        .button {
+            border: 2px solid peru;
+            height: 50px;
+            width: 50px;
+            font-size: 25px;
+            color: white;
+            background-color: black;
+        }
+
+        .button:hover {
+            background-color: #848484;
+        }
+
+        .button:active {
+            background-color: dimgray;
+            box-shadow: 0 5px peru;
+            transform: translateY(3px);
+        }
+
+        input {
+            border-radius: 50px;
+            border: 1px solid peru;
+        }
+
+        input[value="="] {
+            width: 50px;
+            height: 120px;
+        }
+
+        input[value="DeleteHistory"] {
+            width: 435px;
+            height: 50px;
+        }
+
+        input[type="text"] {
+            border: 2px solid peru;
+            font-size: 30px;
+            color: white;
+            background-color: black;
+            width: 395px;
+            height: 50px;
+        }
+    </style>
+    <title>電卓</title>
+    <script type="text/javascript">
+        var kekka = "";
+
+        function btnPressed(x) {
+            if (kekka != "" || kekka == "0") {
+                form.text.value = kekka;
+                kekka = "";
+            }
+            form.text.value += x;
+        }
+
+        function backSpace() {
+            kekka = "";
+            form.text.value = form.text.value.substring(0, form.text.value.length - 1);
+        }
+
+        function clearText() {
+            form.text.value = "";
+            kekka = "";
+        }
+
+        function calculate() {
+            if (kekka != "" || kekka == "0") return;
+            var expression = form.text.value;
+            try {
+                expression = expression.replace(/\^/g, '**');
+                expression = expression.replace(/\^2/g, '** 2');
+                expression = expression.replace(/√([^a-zA-Z0-9])(?![^(]*\))/g, function (match, p1) {
+                    return '√(' + p1 + ')';
+                });
+                expression = expression.replace(/sin([^a-zA-Z0-9])(?![^(]*\))/g, function (match, p1) {
+                    return 'sin(' + p1 + ')';
+                });
+                expression = expression.replace(/cos([^a-zA-Z0-9])(?![^(]*\))/g, function (match, p1) {
+                    return 'cos(' + p1 + ')';
+                });
+                expression = expression.replace(/√(\w+)(?![^(]*\))(?![^(]*\))/g, function (match, p1) {
+                    let num = eval(p1);
+                    return '√(' + p1 + ')';
+                });
+                expression = expression.replace(/sin(\w+)(?![^(]*\))/g, function (match, p1) {
+                    return 'sin(' + p1 + ')';
+                });
+                expression = expression.replace(/cos(\w+)(?![^(]*\))/g, function (match, p1) {
+                    return 'cos(' + p1 + ')';
+                });
+                expression = expression.replace(/π/g, "3.141592653589793");
+                expression = expression.replace(/e/g, "2.718281828459045");
+                expression = expression.replace(/√\(([^)]+)\)/g, function (match, p1) {
+                    let num = eval(p1);
+                    if (num < 0) {
+                        alert("Error: Negative numbers");
+                    }
+                    return Math.sqrt(eval(p1));
+                });
+                expression = expression.replace(/sin\(([^)]+)\)/g, function (match, p1) {
+                    return Math.sin(eval(p1));
+                });
+                expression = expression.replace(/cos\(([^)]+)\)/g, function (match, p1) {
+                    return Math.cos(eval(p1));
+                });
+                kekka = eval(expression);
+                kekka = parseFloat(kekka).toFixed(15);
+                kekka = parseFloat(kekka);
+                if (form.text.value !== "Error: Negative numbers") {
+                    form.text.value += "=" + kekka;
+                    history();
+                }
+            } catch (error) {
+                form.text.value = "Unable to calculate.";
+            }
+        }
+
+        function keypress(event) {
+            var moji;
+            if (event.keyCode != 0) {
+                moji = event.keyCode; //IE 
+            } else {
+                moji = event.charCode; //Firefox 
+            }
+            if (String.fromCharCode(moji) == "B") {
+                backSpace();
+                return false;
+            } else if (String.fromCharCode(moji) == "C") {
+                clearText();
+                return false;
+            } else if (moji == 13 || moji == 61) {
+                calculate();
+                return false;
+            } else if (moji >= 48 && moji <= 57) {
+                form.text.value += String.fromCharCode(moji);
+                return false;
+            } else if (String.fromCharCode(moji) == "o") {
+                btnPressed('00');
+                return false;
+            } else if (String.fromCharCode(moji) == ".") {
+                btnPressed('.');
+                return false;
+            } else if (String.fromCharCode(moji) == "p") {
+                btnPressed('π');
+                return false;
+            } else if (String.fromCharCode(moji) == "e") {
+                btnPressed('e');
+                return false;
+            } else if (String.fromCharCode(moji) == "+") {
+                form.text.value += String.fromCharCode(moji);
+                return false;
+            } else if (String.fromCharCode(moji) == "-") {
+                btnPressed('-');
+                return false;
+            } else if (String.fromCharCode(moji) == "*") {
+                btnPressed('*');
+                return false;
+            } else if (String.fromCharCode(moji) == "/") {
+                btnPressed('/');
+                return false;
+            } else if (String.fromCharCode(moji) == "%") {
+                btnPressed('%');
+                return false;
+            } else if (String.fromCharCode(moji) == "(") {
+                btnPressed('(');
+                return false;
+            } else if (String.fromCharCode(moji) == ")") {
+                btnPressed(')');
+                return false;
+            } else if (String.fromCharCode(moji) == "\"") {
+                btnPressed('^2');
+                return false;
+            } else if (String.fromCharCode(moji) == "^") {
+                btnPressed('^');
+                return false;
+            } else if (String.fromCharCode(moji) == "r") {
+                btnPressed('√');
+                return false;
+            } else if (String.fromCharCode(moji) == "s") {
+                btnPressed('sin(');
+                return false;
+            } else if (String.fromCharCode(moji) == "c") {
+                btnPressed('cos(');
+                return false;
+            } else if (String.fromCharCode(moji) == "h") {
+                DeleteHistory();
+                return false;
+            }
+
+            return true;
+        }
+
+        function history() {
+            form.history5.value = form.history4.value;
+            form.history4.value = form.history3.value;
+            form.history3.value = form.history2.value;
+            form.history2.value = form.history1.value;
+            form.history1.value = form.text.value;
+        }
+
+        function DeleteHistory() {
+            form.history5.value = "";
+            form.history4.value = "";
+            form.history3.value = "";
+            form.history2.value = "";
+            form.history1.value = "";
+        }
+    </script>
+</head>
+
+<body class="stripe" onKeypress="return keypress(event)">
+    <h1 align="center"><span class="header">高級電卓</h1>
+    <form name="form">
+        <table align="center" cellpadding=10 cellspacing=0 bgcolor="black" height=50 width=70>
+            <tr>
+                <td colspan="6"><input type="text" name="text" class="button" size=50></td>
+            </tr>
+            <tr>
+                <td><input type="button" class="button" value="+" onClick="btnPressed('+')"></td>
+                <td><input type="button" class="button" value="7" onClick="btnPressed('7')"></td>
+                <td><input type="button" class="button" value="8" onClick="btnPressed('8')"></td>
+                <td><input type="button" class="button" value="9" onClick="btnPressed('9')"></td>
+                <td><input type="button" class="button" value="(" onClick="btnPressed('(')"></td>
+                <td><input type="button" class="button" value=")" onClick="btnPressed(')')"></td>
+            </tr>
+            <tr>
+                <td><input type="button" class="button" value="-" onClick="btnPressed('-')"></td>
+                <td><input type="button" class="button" value="4" onClick="btnPressed('4')"></td>
+                <td><input type="button" class="button" value="5" onClick="btnPressed('5')"></td>
+                <td><input type="button" class="button" value="6" onClick="btnPressed('6')"></td>
+                <td><input type="button" class="button" value="x²" onClick="btnPressed('^2')"></td>
+                <td><input type="button" class="button" value="BS" onClick="backSpace()"></td>
+            </tr>
+            <tr>
+                <td><input type="button" class="button" value="*" onClick="btnPressed('*')"></td>
+                <td><input type="button" class="button" value="1" onClick="btnPressed('1')"></td>
+                <td><input type="button" class="button" value="2" onClick="btnPressed('2')"></td>
+                <td><input type="button" class="button" value="3" onClick="btnPressed('3')"></td>
+                <td><input type="button" class="button" value="^" onClick="btnPressed('^')"></td>
+                <td><input type="button" class="button" value="C" onClick="clearText()"></td>
+            </tr>
+            <tr>
+                <td><input type="button" class="button" value="/" onClick="btnPressed('/')"></td>
+                <td><input type="button" class="button" value="0" onClick="btnPressed('0')"></td>
+                <td><input type="button" class="button" value="00" onClick="btnPressed('00')"></td>
+                <td><input type="button" class="button" value="." onClick="btnPressed('.')"></td>
+                <td><input type="button" class="button" value="√" onClick="btnPressed('√')"></td>
+                <td rowspan="2"><input type="button" class="button" value="=" onClick="calculate()"></td>
+            </tr>
+            <tr>
+                <td><input type="button" class="button" value="%" onClick="btnPressed('%')"></td>
+                <td><input type="button" class="button" value="π" onClick="btnPressed('π')"></td>
+                <td><input type="button" class="button" value="e" onClick="btnPressed('e')"></td>
+                <td><input type="button" class="button" value="sin" onClick="btnPressed('sin')"></td>
+                <td><input type="button" class="button" value="cos" onClick="btnPressed('cos')"></td>
+            </tr>
+        </table>
+        <h1 align="center"><span class="header">計算履歴</h1>
+        <table align="center" cellpadding=10 cellspacing=0 bgcolor="black" height=50 width=70>
+            <tr>
+                <td>
+                    <font size="5">1</font>
+                </td>
+                <td><input type="text" name="history1" class="button"></td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="5">2</font>
+                </td>
+                <td><input type="text" name="history2" class="button"></td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="5">3</font>
+                </td>
+                <td><input type="text" name="history3" class="button"></td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="5">4</font>
+                </td>
+                <td><input type="text" name="history4" class="button"></td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="5">5</font>
+                </td>
+                <td><input type="text" name="history5" class="button"></td>
+            </tr>
+            <tr>
+                <td colspan="2"><input type="button" class="button" value="DeleteHistory" onClick="DeleteHistory()">
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h1 align="center"><span class="header">使用方法</h1>
+    <table id="table3" align="center" cellpadding=10 cellspacing=0 bgcolor="black" height=50 width=600>
+        <tr>
+            <td colspan="3">
+                各ボタンは、基本同じキーや、英語にした場合の、頭文字のキーを押すことで入力できます。<span style="color:darkgoldenrod">00がo</span>、<span
+                    style="color:darkgoldenrod">BSがShift+b</span>、<span
+                    style="color:darkgoldenrod">CがShift+c</span>である点に注意してください。
+                卓の下に履歴が表示されますが、<span style="color:darkgoldenrod">h</span>を押すことで<span
+                    style="color:darkgoldenrod">履歴の削除</span>が行えます。
+                演算結果が小数点以下15桁になるように四捨五入をしています。
+            </td>
+        </tr>
+        <tr>
+            <td>ボタン</td>
+            <td>キーボード入力</td>
+            <td>説明</td>
+        </tr>
+        <tr>
+            <td>BS</td>
+            <td>Shift+b</td>
+            <td>文字を1文字消す。</td>
+        </tr>
+        <tr>
+            <td>C</td>
+            <td>Shift+c</td>
+            <td>文字を全て消す。</td>
+        </tr>
+        <tr>
+            <td>=</td>
+            <td>Shift+=, Enter</td>
+            <td>演算結果を表示する。</td>
+        </tr>
+        <tr>
+            <td>0〜9</td>
+            <td>0〜9</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>00</td>
+            <td>o</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>.</td>
+            <td>.</td>
+            <td>小数点を入力する。</td>
+        </tr>
+        <tr>
+            <td>π</td>
+            <td>p</td>
+            <td>円周率15桁の表示をする。</td>
+        </tr>
+        <tr>
+            <td>e</td>
+            <td>e</td>
+            <td>ネイピア数15桁の表示をする。</td>
+        </tr>
+        <tr>
+            <td>+</td>
+            <td>Shift+;</td>
+            <td>加算を行う。</td>
+        </tr>
+        <tr>
+            <td>-</td>
+            <td>-</td>
+            <td>減算を行う。</td>
+        </tr>
+        <tr>
+            <td>*</td>
+            <td>Shift+:</td>
+            <td>乗算を行う。</td>
+        </tr>
+        <tr>
+            <td>/</td>
+            <td>/</td>
+            <td>除算を行う。</td>
+        </tr>
+        <tr>
+            <td>%</td>
+            <td>Shift+5</td>
+            <td>割った余りを表示する。</td>
+        </tr>
+        <tr>
+            <td>(</td>
+            <td>Shift+8</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>)</td>
+            <td>Shift+9</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>x²</td>
+            <td>Shift+2</td>
+            <td>値を2乗する。</td>
+        </tr>
+        <tr>
+            <td>^</td>
+            <td>^</td>
+            <td>累乗の計算をする。</td>
+        </tr>
+        <tr>
+            <td>√</td>
+            <td>r</td>
+            <td>平方根の計算をする。</td>
+        </tr>
+        <tr>
+            <td>sin</td>
+            <td>s</td>
+            <td>正弦の計算をする。(ラジアン)</td>
+        </tr>
+        <tr>
+            <td>cos</td>
+            <td>c</td>
+            <td>余弦の計算をする。(ラジアン)</td>
+        </tr>
+        <tr>
+            <td>Delete History</td>
+            <td>h</td>
+            <td>履歴を削除する。</td>
+        </tr>
+    </table>
+    <div class="spacer"></div>
+</body>
+
+</html>

@@ -24,4 +24,4 @@
 |11|観光案内マップ|[link](https://j329nish.github.io/Web-Programming/11.html)|
 
 
-(最終更新 2025/4/28)
+(最終更新 2025/5/28)

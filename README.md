@@ -4,7 +4,7 @@
 
 |使用した技術等|
 |:-|
-|HTML, CSS, PHP, JavaScript, Java, SQL|
+|HTML, CSS, PHP, JavaScript, SQL|
 
 # 開けるページ
 |id|内容|Link|

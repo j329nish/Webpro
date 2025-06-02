@@ -14,7 +14,7 @@
 |3|宅配ピザ屋|[Link](https://j329nish.github.io/Web-Programming/3.html)|
 |6|もぐらたたき|[Link](https://j329nish.github.io/Web-Programming/6.html)|
 |7-1|スライドパズル(3×3)|[Link](https://j329nish.github.io/Web-Programming/7-1.html)|
-|7-2|スライドパズル(5×3)|[Link](https://j329nish.github.io/Web-Programming/7-2.html)|
+|7-2|スライドパズル(6×3)|[Link](https://j329nish.github.io/Web-Programming/7-2.html)|
 |8-0|１次元ランダムウォーク|[Link](https://j329nish.github.io/Web-Programming/8-0.html)|
 |8-1|２次元ランダムウォーク|[Link](https://j329nish.github.io/Web-Programming/8-1.html)|
 |8-2|アナログ時計|[Link](https://j329nish.github.io/Web-Programming/8-2.html)|
@@ -24,4 +24,4 @@
 |11|観光案内マップ|[Link](https://j329nish.github.io/Web-Programming/11.html)|
 
 
-(最終更新 2025/5/31)
+(最終更新 2025/6/2)

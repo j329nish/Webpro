@@ -9,7 +9,6 @@
 # 開けるページ
 |id|内容|Link|
 |-|-|-|
-|1|自己紹介|[Link](https://j329nish.github.io/Web-Programming/1.html)|
 |2|電卓|[Link](https://j329nish.github.io/Web-Programming/2.html)|
 |3|宅配ピザ屋|[Link](https://j329nish.github.io/Web-Programming/3.html)|
 |6|もぐらたたき|[Link](https://j329nish.github.io/Web-Programming/6.html)|
